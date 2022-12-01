@@ -1,26 +1,30 @@
-import os, time, piexif, re
 import argparse
+import os
+import piexif
+import re
+import time
+
+from pywintypes import Time
 from win32file import CreateFile, SetFileTime, CloseHandle
 from win32file import GENERIC_READ, GENERIC_WRITE, OPEN_EXISTING
-from pywintypes import Time
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path", type=str, required=True, help="Set input path.")
-    parser.add_argument("--date-format", type=str, choices=['YYYY-MM-DD', 'YYYYMMDD', 'YYYY-MM', 'YYYYMM'],
+    parser.add_argument("--path", type=str, required=True, help="Input path.")
+    parser.add_argument("--date-format", type=str, choices=['YYYYMMDD', 'YYYY-MM-DD', 'YYYYMM', 'YYYY-MM'],
                         default='YYYYMMDD',
-                        help="Set the date format of the parent directory. Optional YYYY-MM-DD, YYYYMMDD, YYYY-MM "
-                             "or YYYYMM, The default format is YYYYMMDD.")
+                        help="Set the format for getting the time info from the parent directory name."
+                             " Support YYYYMMDD(default), YYYY-MM-DD, YYYYMM and YYYY-MM.")
     parser.add_argument("--force", action='store_true',
-                        help="TODO. Update the exif of all JPG files with the time of the parent directory,"
-                             " even if the exif already exists.")
+                        help="Force the time information to be written into the EXIF of the JPG/JPEG file,"
+                             " even if the time information already exists in the EXIF.")
 
     args = parser.parse_args()
     return args
 
 
-def time_writer(args):
+def write_time(args):
     pattern_dict = {
         'YYYY-MM-DD': '^(\d{4})-(\d{2})-(\d{2})\s',
         'YYYYMMDD': '^(\d{4})(\d{2})(\d{2})\s',
@@ -34,22 +38,21 @@ def time_writer(args):
         exif_time = '1970:01:01 00:00:00'
         file_time = '1970-01-01 00:00:00'
 
-        # 根据目录的名称生成exif时间和文件时间
         if re.match(pattern_date, dir_name):
-            date_result = re.findall(pattern_date, dir_name)[0]
+            date_tuple = re.findall(pattern_date, dir_name)[0]
             if args.date_format in ['YYYY-MM-DD', 'YYYYMMDD']:
-                exif_time = date_result[0] + ':' + date_result[1] + ':' + date_result[2] + ' 00:00:00'
-                file_time = date_result[0] + '-' + date_result[1] + '-' + date_result[2] + ' 00:00:00'
+                exif_time = date_tuple[0] + ':' + date_tuple[1] + ':' + date_tuple[2] + ' 00:00:00'
+                file_time = date_tuple[0] + '-' + date_tuple[1] + '-' + date_tuple[2] + ' 00:00:00'
             elif args.date_format in ['YYYY-MM', 'YYYYMM']:
-                exif_time = date_result[0] + ':' + date_result[1] + ':' + '01' + ' 00:00:00'
-                file_time = date_result[0] + '-' + date_result[1] + '-' + '01' + ' 00:00:00'
+                exif_time = date_tuple[0] + ':' + date_tuple[1] + ':' + '01' + ' 00:00:00'
+                file_time = date_tuple[0] + '-' + date_tuple[1] + '-' + '01' + ' 00:00:00'
 
             g = os.walk(args.path + '\\' + dir_name)
             for dir_path, dir_names, filenames in g:
                 for filename in filenames:
                     file_full_path = os.path.join(dir_path, filename)
                     if check_format(file_full_path):
-                        if not check_exif(file_full_path):
+                        if args.force or not check_exif(file_full_path):
                             write_exif(file_full_path, exif_time, exif_time, exif_time)
                     else:
                         modify_file_time(file_full_path, file_time, file_time, file_time)
@@ -144,4 +147,4 @@ def get_exif(path):
 
 
 if __name__ == '__main__':
-    time_writer(get_args())
+    write_time(get_args())

@@ -1,18 +1,24 @@
-# exif-time-writer
+# time-writer
 
-In order to ensure that the pictures and videos are displayed in an orderly manner on the timeline.
+In order to ensure that the pictures and videos are displayed in an orderly manner on the timeline, write the time info in the EXIF of the JPG/JPEG files, for files that do not support EXIF, such as PNG and MP4, modify the file‘s create time, modify time and access time.
 
-Get date info from parent directory name, write time information to exif of JPG/JPEG files, or change the create time, modify time and access time of non-JPG files.
+The time info of the file comes from the name of the parent directory.
 
-为了保证图片和视频在导入图库后在时间轴上有序展示。从父目录的文件夹名称中获取日期信息，写入到 JPG/JPEG 文件的 exif 中，对于 PNG/MP4 等不含 exif 的文件，则修改文件的创建时间、修改时间和访问时间。
+![example](resource/example.jpg)
 
-# How to use
+# Example
 
-1. Install requirements with `pip install -r requirements.txt`
-2. Run `python exif-time-writer.py --path 'D:\photo_path' --date-format 'YYYY-MM-DD'`
+```bash
+# 1. Install requirements
+$ pip install -r requirements.txt
+
+# 2. Run time-writer.py
+$ python time-writer.py --path 'testpic/' --date-format 'YYYYMMDD'
+Done, photo time has been changed to 2020:12:01 00:00:00, 2020:12:01 00:00:00, 2020:12:01 00:00:00
+```
 
 # Options
 
 - `--path PATH`：Input path, required.
-- `--date-format`: Date format of directory name, support `YYYYMMDD`, `YYYY-MM-DD`, `YYYYMM` and `YYYY-MM`, `YYYYMMDD` is the default. (Directory name example: `20221130 香山秋色`, `2022-11-30 香山秋色`, `202211 香山秋色`, `2022-11 香山秋色` )
-- `--force`: TODO. Update the exif of all JPG files with the time of the parent directory, even if the exif already exists.
+- `--date-format FORMAT`: Set the format for getting the time info from the parent directory name. Support `YYYYMMDD`(default), `YYYY-MM-DD`, `YYYYMM` and `YYYY-MM`. Directory name example: `20201201 photo album`, `2020-12-01 photo album`, `202012 photo album`, `2020-12 photo album`.
+- `--force`: Force the time information to be written into the EXIF of the JPG/JPEG file, even if the time information already exists in the EXIF.
